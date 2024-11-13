@@ -242,7 +242,7 @@ implementation {
      * Called when the node recieves a routing packet
      * Processes the route information from the packet
      */
-    command void Routing.recieve(pack* routing_packet) {
+    command void Routing.receive(pack* routing_packet) {
         uint16_t i;
 
         // Iterate over each route in the payload
