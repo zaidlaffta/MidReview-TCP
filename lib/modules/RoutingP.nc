@@ -124,37 +124,40 @@ void resetRouteUpdates() {
     }
 
 
-    void decrementTimer(Route route) {
-        route.TTL = route.TTL-1;
-        updateRoute(route);
+    // Decrements the TTL (Time-To-Live) of a given route, initiating garbage collection if expired
+void decrementTimer(Route route) {
+    route.TTL = route.TTL - 1; // Decrease the TTL of the route by 1
+    updateRoute(route); // Update the modified route in the routing table
 
-        if (route.TTL == 0 && route.cost != ROUTE_MAX_COST) {
-            uint16_t size = call RoutingTable.size();
-            uint16_t i;
+    // Check if the route TTL has expired and if it is still a valid route
+    if (route.TTL == 0 && route.cost != ROUTE_MAX_COST) {
+        uint16_t size = call RoutingTable.size();
+        uint16_t i;
 
-            route.TTL = ROUTE_GARBAGE_COLLECT;
-            route.cost = ROUTE_MAX_COST;
-            route.route_changed = TRUE;
+        // Set the route to "garbage collection" mode
+        route.TTL = ROUTE_GARBAGE_COLLECT; // Set TTL for garbage collection duration
+        route.cost = ROUTE_MAX_COST; // Mark the route cost as maximum to indicate unreachability
+        route.route_changed = TRUE; // Flag the route as changed
 
-            updateRoute(route);
-            triggeredUpdate();
+        updateRoute(route); // Update the route in the routing table
+        triggeredUpdate(); // Trigger an update to notify neighbors of the route change
 
-            for (i = 0; i < size; i++) {
-                Route current_route = call RoutingTable.get(i);
+        // Check all other routes to update those that use the same next hop
+        for (i = 0; i < size; i++) {
+            Route current_route = call RoutingTable.get(i);
 
-                if (current_route.next_hop == route.next_hop && current_route.cost != ROUTE_MAX_COST) {
-                    current_route.TTL = ROUTE_GARBAGE_COLLECT;
-                    current_route.cost = ROUTE_MAX_COST;
-                    current_route.route_changed = TRUE;
+            // If the route depends on the same next hop, mark it for garbage collection as well
+            if (current_route.next_hop == route.next_hop && current_route.cost != ROUTE_MAX_COST) {
+                current_route.TTL = ROUTE_GARBAGE_COLLECT; // Set TTL for garbage collection
+                current_route.cost = ROUTE_MAX_COST; // Set cost to maximum
+                current_route.route_changed = TRUE; // Mark as changed
 
-                    updateRoute(current_route);
-                    triggeredUpdate();
-                }
+                updateRoute(current_route); // Update the dependent route in the table
+                triggeredUpdate(); // Trigger an update for this route change
             }
         }
-           
     }
-
+}
 
     void decrementRouteTimers() {
         uint16_t i;
