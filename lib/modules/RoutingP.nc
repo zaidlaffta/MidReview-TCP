@@ -14,9 +14,7 @@ module RoutingP {
 
     uses interface List<Route> as RoutingTable;
     uses interface SimpleSend as Sender;
-
     uses interface Random;
-
     uses interface Timer<TMilli> as TriggeredEventTimer;
     uses interface Timer<TMilli> as RegularTimer;
 }
@@ -25,16 +23,12 @@ implementation {
     /** The number of router that can fit in a packet's payload */
     uint16_t routesPerPacket = 1;
 
-    /**
-     * Generates a random 16-bit number between 'min' and 'max'
-     */
+    
     uint32_t randNum(uint32_t min, uint32_t max) {
         return ( call Random.rand16() % (max-min+1) ) + min;
     }
 
-    /** 
-     * Checks if a destination is in the routing table.
-     */
+   
     bool inTable(uint16_t dest) {
         uint16_t size = call RoutingTable.size();
         uint16_t i;
@@ -52,10 +46,7 @@ implementation {
         return isInTable;
     }
 
-    /**
-     * Returns the route associated with the destination.
-     * Returns a '0' route with missing routes.
-     */
+    
     Route getRoute(uint16_t dest) {
         Route return_route;
         uint16_t size = call RoutingTable.size();
@@ -73,10 +64,7 @@ implementation {
         return return_route;
     }
 
-    /**
-     * Removes the route associated with the destination.
-     * Does nothing in route not in the table.
-     */
+   
     void removeRoute(uint16_t dest) {
         uint16_t size = call RoutingTable.size();
         uint16_t i;
@@ -93,11 +81,7 @@ implementation {
         dbg(ROUTING_CHANNEL, "ERROR - Can't remove nonexistent route %d\n", dest);
     }
 
-    /**
-     * Updates the existing route with a new structure.
-     * Updates based on destination value of 'route'.
-     * If the route is not in the table, nothing happens.
-     */
+   
     void updateRoute(Route route) {
         uint16_t size = call RoutingTable.size();
         uint16_t i;
@@ -114,9 +98,7 @@ implementation {
         dbg(ROUTING_CHANNEL, "ERROR - Update attempt on nonexistent route %d\n", route.dest);
     }
 
-    /**
-     * Resets the 'route changed' flag in all routes
-     */
+
     void resetRouteUpdates() {
         uint16_t size = call RoutingTable.size();
         uint16_t i;
@@ -128,18 +110,12 @@ implementation {
         }
     }
 
-    /**
-     * Starts the timer before a triggered update is sent
-     * Timer resets upon another function call
-     */
+ 
     void triggeredUpdate() {
         call TriggeredEventTimer.startOneShot( randNum(1000, 5000) );
     }
 
-    /**
-     * Decrements the timer on the given route
-     * Invalidates the route, or removes it based on which timer runs out
-     */
+
     void decrementTimer(Route route) {
         route.TTL = route.TTL-1;
         updateRoute(route);
@@ -176,11 +152,7 @@ implementation {
         // }     
     }
 
-    /**
-     * Decrements the timeout on each route in the table
-     * If the timeout timer expires, garbage collection starts.
-     * If garbage collection finishes, the route is deleted.
-     */
+
     void decrementRouteTimers() {
         uint16_t i;
 
@@ -191,18 +163,13 @@ implementation {
         }
     }
 
-    /**
-     * Marks a route as invalid, initiates timeout functionality
-     */
+
     void invalidate(Route route) {
         route.TTL = 1;
         decrementTimer(route);
     }
 
-    /**
-     * Initializes the routing process
-     * Have to call updateNeighbors first
-     */
+
     command void Routing.start() {
         if (call RoutingTable.size() == 0) {
             dbg(ROUTING_CHANNEL, "ERROR - Can't route with no neighbors! Make sure to updateNeighbors first.\n");
@@ -215,9 +182,7 @@ implementation {
         }
     }
 
-    /**
-     * Sends given packet based on the routing table's next hop value
-     */
+
     command void Routing.send(pack* msg) {
         Route route;
 
@@ -238,10 +203,7 @@ implementation {
         call Sender.send(*msg, route.next_hop);
     }
 
-    /**
-     * Called when the node recieves a routing packet
-     * Processes the route information from the packet
-     */
+
     command void Routing.receive(pack* routing_packet) {
         uint16_t i;
 
@@ -331,10 +293,7 @@ implementation {
         }
     }
 
-    /**
-     * Updates the neighbor list associated with this routing .
-     * Updates routes in table for neighbors
-     */
+
     command void Routing.updateNeighbors(uint32_t* neighbors, uint16_t numNeighbors) {
         uint16_t i;
         uint16_t size = call RoutingTable.size();
@@ -393,10 +352,7 @@ implementation {
         }
     }
 
-    /**
-     * Called by simulation
-     * Prints the routing table in 'destination, next hop, cost' format
-     */
+
     command void Routing.printRoutingTable() {
         uint16_t size = call RoutingTable.size();
         uint16_t i;
@@ -409,10 +365,7 @@ implementation {
         dbg(GENERAL_CHANNEL, "--------------------------------\n");
     }
 
-    /**
-     * Sends all routes with route_changed = TRUE to all neighbor nodes
-     * Should only ever be run as a one-time timer, not periodically
-     */
+
     event void TriggeredEventTimer.fired() {
         uint16_t size = call RoutingTable.size();
         uint16_t packet_index = 0;
@@ -449,9 +402,7 @@ implementation {
         resetRouteUpdates();
     }
 
-    /**
-     * Processes TTL and sends entire routing table to neighbors
-     */
+
     event void RegularTimer.fired() {
         uint16_t size = call RoutingTable.size();
         uint16_t i;
