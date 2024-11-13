@@ -48,23 +48,25 @@ bool inTable(uint16_t dest) {
     return isInTable; // Return whether the destination is in the table
 }
 
-    
-    Route getRoute(uint16_t dest) {
-        Route return_route;
-        uint16_t size = call RoutingTable.size();
-        uint16_t i;
+   // Retrieves the route for a given destination from the routing table
+Route getRoute(uint16_t dest) {
+    Route return_route; // Initialize a variable to store the found route
+    uint16_t size = call RoutingTable.size(); // Get the size of the routing table
+    uint16_t i;
 
-        for (i = 0; i < size; i++) {
-            Route route = call RoutingTable.get(i);
+    // Loop through each route in the routing table
+    for (i = 0; i < size; i++) {
+        Route route = call RoutingTable.get(i); // Get the route at the current index
 
-            if (route.dest == dest) {
-                return_route = route;
-                break;
-            }
+        // Check if the route's destination matches the target destination
+        if (route.dest == dest) {
+            return_route = route; // Set the return route to the matching route
+            break; // Exit the loop as the matching route has been found
         }
-
-        return return_route;
     }
+
+    return return_route; // Return the found route (or a default route if none matched)
+}
 
    
     void removeRoute(uint16_t dest) {
