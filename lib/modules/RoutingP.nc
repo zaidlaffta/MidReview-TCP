@@ -191,27 +191,32 @@ command void Routing.start() {
     }
 }
 
+// Sends a packet based on the destination, using the routing table to determine the next hop
+command void Routing.send(pack* msg) {
+    Route route;
 
-
-    command void Routing.send(pack* msg) {
-        Route route;
-
-        if (!inTable(msg->dest)) {
-            dbg(ROUTING_CHANNEL, "Cannot send packet from %d to %d: no connection\n", msg->src, msg->dest);
-            return;
-        }
-
-        route = getRoute(msg->dest);
-
-        if (route.cost == ROUTE_MAX_COST) {
-            dbg(ROUTING_CHANNEL, "Cannot send packet from %d to %d: cost infinity\n", msg->src, msg->dest);
-            return;
-        }
-        
-        dbg(ROUTING_CHANNEL, "Routing Packet: src: %d, dest: %d, seq: %d, next_hop: %d, cost: %d\n", msg->src, msg->dest, msg->seq, route.next_hop, route.cost);
-
-        call Sender.send(*msg, route.next_hop);
+    // Check if the destination is in the routing table
+    if (!inTable(msg->dest)) {
+        dbg(ROUTING_CHANNEL, "Cannot send packet from %d to %d: no connection\n", msg->src, msg->dest);
+        return; // Exit if there is no route to the destination
     }
+
+    // Retrieve the route information for the specified destination
+    route = getRoute(msg->dest);
+
+    // Check if the route cost is set to infinity, indicating an unreachable route
+    if (route.cost == ROUTE_MAX_COST) {
+        dbg(ROUTING_CHANNEL, "Cannot send packet from %d to %d: cost infinity\n", msg->src, msg->dest);
+        return; // Exit if the route is unreachable
+    }
+
+    // Log the packet details and the routing decision
+    dbg(ROUTING_CHANNEL, "Routing Packet: src: %d, dest: %d, seq: %d, next_hop: %d, cost: %d\n", 
+        msg->src, msg->dest, msg->seq, route.next_hop, route.cost);
+
+    // Send the packet to the next hop determined by the routing table
+    call Sender.send(*msg, route.next_hop);
+}
 
 
     command void Routing.receive(pack* routing_packet) {
