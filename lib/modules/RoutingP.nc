@@ -311,120 +311,141 @@ command void Routing.receive(pack* routing_packet) {
     }
 }
 
+// Updates the routing table based on the current list of neighbors
+command void Routing.updateNeighbors(uint32_t* neighbors, uint16_t numNeighbors) {
+    uint16_t i;
+    uint16_t size = call RoutingTable.size();
 
-    command void Routing.updateNeighbors(uint32_t* neighbors, uint16_t numNeighbors) {
-        uint16_t i;
-        uint16_t size = call RoutingTable.size();
+    // Loop through each neighbor to add or update in the routing table
+    for (i = 0; i < numNeighbors; i++) {
+        Route route;
 
-        for (i = 0; i < numNeighbors; i++) {
-            Route route;
+        // Set neighbor details for the new route entry
+        route.dest = neighbors[i];
+        route.cost = 1;
+        route.next_hop = neighbors[i];
+        route.TTL = ROUTE_TIMEOUT;
+        route.route_changed = TRUE;
 
-            route.dest = neighbors[i];
-            route.cost = 1;
-            route.next_hop = neighbors[i];
-            route.TTL = ROUTE_TIMEOUT;
-            route.route_changed = TRUE;
+        // If the route already exists, update if the cost has changed
+        if (inTable(route.dest)) {
+            Route existing_route = getRoute(route.dest);
 
-            if (inTable(route.dest)) {
-                Route existing_route = getRoute(route.dest);
-
-                if (existing_route.cost != route.cost) {
-                    updateRoute(route);
-                    triggeredUpdate();
-                }
-            }
-            else {
-                call RoutingTable.pushback(route);
-                triggeredUpdate();
+            if (existing_route.cost != route.cost) {
+                updateRoute(route);
+                triggeredUpdate(); // Notify neighbors of the route change
             }
         }
+        // If the route does not exist, add it to the routing table
+        else {
+            call RoutingTable.pushback(route);
+            triggeredUpdate(); // Trigger an update for the new route
+        }
+    }
 
-        for (i = 0; i < size; i++) {
-            Route route = call RoutingTable.get(i);
-            uint16_t j;
+    // Check for routes that are no longer neighbors and invalidate them
+    for (i = 0; i < size; i++) {
+        Route route = call RoutingTable.get(i);
+        uint16_t j;
 
-            if (route.cost == ROUTE_MAX_COST) {
-                continue;
+        // Skip routes already marked as unreachable
+        if (route.cost == ROUTE_MAX_COST) {
+            continue;
+        }
+
+        // Identify routes with direct neighbors that are no longer valid
+        if (route.cost == 1) {
+            bool isNeighbor = FALSE;
+
+            // Check if the route's destination is in the current neighbor list
+            for (j = 0; j < numNeighbors; j++) {
+                if (route.dest == neighbors[j]) {
+                    isNeighbor = TRUE;
+                    break;
+                }
             }
 
-            if (route.cost == 1) {
-                bool isNeighbor = FALSE;
+            // Invalidate routes that are no longer valid neighbors
+            if (!isNeighbor) {
+                invalidate(route);
+            }
+        }
+    }
+}
 
-                for (j = 0; j < numNeighbors; j++) {
-                    if (route.dest == neighbors[j]) {
-                        isNeighbor = TRUE;
-                        break;
-                    }
-                }
+// Prints the routing table to the debug channel for review
+command void Routing.printRoutingTable() {
+    uint16_t size = call RoutingTable.size();
+    uint16_t i;
 
-                if (!isNeighbor) {
-                    invalidate(route);
-                }
+    dbg(GENERAL_CHANNEL, "----- dest\tnext hop\tcost ------\n");
+    for (i = 0; i < size; i++) {
+        Route route = call RoutingTable.get(i);
+        dbg(GENERAL_CHANNEL, "--- %d\t\t%d\t\t\t%d\n", route.dest, route.next_hop, route.cost);
+    }
+    dbg(GENERAL_CHANNEL, "----------------------------------\n");
+}
+
+// Event handler for the triggered update timer, sends updated routes to neighbors
+event void TriggeredEventTimer.fired() {
+    uint16_t size = call RoutingTable.size();
+    uint16_t packet_index = 0;
+    uint16_t current_route;
+    pack msg;
+
+    // Set up message parameters
+    msg.src = TOS_NODE_ID;
+    msg.TTL = 1;
+    msg.protocol = PROTOCOL_DV;
+    msg.seq = signal Routing.getSequence();
+
+    // Clear the payload area
+    memset((&msg.payload), '\0', PACKET_MAX_PAYLOAD_SIZE);
+
+    // Loop through all routes and add changed routes to the message payload
+    for (current_route = 0; current_route < size; current_route++) {
+        Route route = call RoutingTable.get(current_route);
+        msg.dest = route.dest;
+
+        // Only include routes marked as changed
+        if (route.route_changed) {
+            memcpy((&msg.payload) + packet_index * ROUTE_SIZE, &route, ROUTE_SIZE);
+            packet_index++;
+
+            // Send the packet if it is full, then reset the payload
+            if (packet_index == routesPerPacket) {
+                packet_index = 0;
+                call Sender.send(msg, AM_BROADCAST_ADDR);
+                memset((&msg.payload), '\0', PACKET_MAX_PAYLOAD_SIZE);
             }
         }
     }
 
+    // Reset the route change flags for all routes after sending
+    resetRouteUpdates();
+}
 
-    command void Routing.printRoutingTable() {
-        uint16_t size = call RoutingTable.size();
-        uint16_t i;
+// Event handler for the regular timer, decrements TTLs and initiates updates
+event void RegularTimer.fired() {
+    uint16_t size = call RoutingTable.size();
+    uint16_t i;
 
-        dbg(GENERAL_CHANNEL, "----- dest\tnext hop\tcost ------\n");
-        for (i = 0; i < size; i++) {
-            Route route = call RoutingTable.get(i);
-            dbg(GENERAL_CHANNEL, "--- %d\t\t%d\t\t\t%d\n", route.dest, route.next_hop, route.cost);
-        }
-        dbg(GENERAL_CHANNEL, "----------------------------------\n");
+    // Stop the triggered event timer to avoid conflicts
+    call TriggeredEventTimer.stop();
+
+    // Decrement the TTL for each route, marking expired routes
+    decrementRouteTimers();
+
+    // Mark all routes as changed to ensure updates are sent to neighbors
+    for (i = 0; i < size; i++) {
+        Route route = call RoutingTable.get(i);
+        route.route_changed = TRUE;
+        updateRoute(route);
     }
 
-
-    event void TriggeredEventTimer.fired() {
-        uint16_t size = call RoutingTable.size();
-        uint16_t packet_index = 0;
-        uint16_t current_route;
-        pack msg;
-
-        msg.src = TOS_NODE_ID;
-        msg.TTL = 1;
-        msg.protocol = PROTOCOL_DV;
-        msg.seq = signal Routing.getSequence();
-
-        memset((&msg.payload), '\0', PACKET_MAX_PAYLOAD_SIZE);
-
-        for (current_route = 0; current_route < size; current_route++) {
-            Route route = call RoutingTable.get(current_route);
-
-            msg.dest = route.dest;
-
-            if (route.route_changed) {
-
-                memcpy((&msg.payload) + packet_index*ROUTE_SIZE, &route, ROUTE_SIZE);
-
-                packet_index++;
-                if (packet_index == routesPerPacket) {
-                    packet_index = 0;
-
-                    call Sender.send(msg, AM_BROADCAST_ADDR);
-                    memset((&msg.payload), '\0', PACKET_MAX_PAYLOAD_SIZE);
-                }
-            }
-        }
-
-        resetRouteUpdates();
-    }
+    // Trigger the event timer to send the updated routing table to neighbors
+    signal TriggeredEventTimer.fired();
+}
 
 
-    event void RegularTimer.fired() {
-        uint16_t size = call RoutingTable.size();
-        uint16_t i;
-        call TriggeredEventTimer.stop();
-        decrementRouteTimers();
-        for (i = 0; i < size; i++) {
-            Route route = call RoutingTable.get(i);
-            route.route_changed = TRUE;
-            updateRoute(route);
-        }
-
-        signal TriggeredEventTimer.fired();
-    }
 }
