@@ -105,7 +105,13 @@ implementation {
 
         return TRUE;  // Valid packet
     }
-
+    // Function to clear the packet history list
+    void clearPacketHistory() {
+        while (call PreviousPackets.size() > 0) {
+            call PreviousPackets.popfront(); // Remove packets from the front until the list is empty
+        }
+        dbg(FLOODING_CHANNEL, "Packet history cleared.\n");
+    }
     // Function to broadcast (flood) the packet to all nodes
     void sendFlood(pack* msg) {
         // Log packet source and destination details if not a broadcast or from the local node
