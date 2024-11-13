@@ -403,15 +403,21 @@ implementation {
     }
 
 
-    // Timer event to decrement TTL and initiate updates
     event void RegularTimer.fired() {
+        uint16_t size = call RoutingTable.size();
+        uint16_t i;
+
+        // Stop triggered event timer, no need to send at this point
         call TriggeredEventTimer.stop();
         decrementRouteTimers();
-        for (uint16_t i = 0; i < call RoutingTable.size(); i++) {
+
+        // Mark all nodes as changed, let TriggeredEvent handle the sending
+        for (i = 0; i < size; i++) {
             Route route = call RoutingTable.get(i);
             route.route_changed = TRUE;
             updateRoute(route);
         }
+
         signal TriggeredEventTimer.fired();
     }
 }
