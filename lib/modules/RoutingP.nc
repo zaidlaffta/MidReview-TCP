@@ -105,21 +105,22 @@ void removeRoute(uint16_t dest) {
         dbg(ROUTING_CHANNEL, "ERROR - Update attempt on nonexistent route %d\n", route.dest);
     }
 
+// Resets the 'route_changed' flag for all routes in the routing table
+void resetRouteUpdates() {
+    uint16_t size = call RoutingTable.size(); // Get the current size of the routing table
+    uint16_t i;
 
-    void resetRouteUpdates() {
-        uint16_t size = call RoutingTable.size();
-        uint16_t i;
-
-        for (i = 0; i < size; i++) {
-            Route route = call RoutingTable.get(i);
-            route.route_changed = FALSE;
-            call RoutingTable.set(i, route);
-        }
+    // Loop through each route in the routing table
+    for (i = 0; i < size; i++) {
+        Route route = call RoutingTable.get(i); // Retrieve the route at the current index
+        route.route_changed = FALSE; // Reset the 'route_changed' flag to indicate no recent changes
+        call RoutingTable.set(i, route); // Update the route in the table with the reset flag
     }
+}
 
  
     void triggeredUpdate() {
-        call TriggeredEventTimer.startOneShot( randNum(1000, 5000) );
+        call TriggeredEventTimer.startOneShot( randNum(500, 3000) );
     }
 
 
