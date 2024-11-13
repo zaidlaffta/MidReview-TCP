@@ -89,14 +89,13 @@ implementation {
 
             // Route message to the appropriate protocol handler
             if (myMsg->protocol == PROTOCOL_DV) {
-                call Routing.recieve(myMsg);
+                call Routing.receive(myMsg);
             } else if (myMsg->protocol == PROTOCOL_TCP && myMsg->dest == TOS_NODE_ID) {
-               // call TCP.recieve(myMsg);
                call TCP.receive(myMsg);
             } else if (myMsg->dest == TOS_NODE_ID) {
                 pingHandler(myMsg); // Handle as ping
             } else if (myMsg->dest == AM_BROADCAST_ADDR) {
-                call NeighborDiscovery.recieve(myMsg); // Handle as neighbor discovery
+                call NeighborDiscovery.receive(myMsg); // Handle as neighbor discovery
             } else {
                 call Routing.send(myMsg); // Forward to other nodes
             }
