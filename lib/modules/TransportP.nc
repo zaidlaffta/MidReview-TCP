@@ -1,6 +1,5 @@
-// Auth: Zaid Laffta
-// Winter 2024
-// CSE 160
+// Authored by: Zaid Laffta
+// CSE 160 - Winter 2024
 
 #include <Timer.h>
 #include "../../includes/socket.h"
@@ -16,177 +15,177 @@ module TransportP {
 
 implementation {
 
-    // Allocates a new socket if available
+    // Allocates a new socket, returning a socket descriptor if successful
     command socket_t socket() {
-        uint32_t* fds = call SocketMap.getKeys(); 
-        uint16_t size = call SocketMap.size();
+        uint32_t* existing_fds = call SocketMap.getKeys();
+        uint16_t map_size = call SocketMap.size();
         socket_t fd;
-        uint8_t i;
+        uint8_t idx;
 
-        if (size == MAX_NUM_OF_SOCKETS) {
-            dbg(TRANSPORT_CHANNEL, "[Error] socket: No room for new socket\n");
+        if (map_size >= MAX_NUM_OF_SOCKETS) {
+            dbg(TRANSPORT_CHANNEL, "[Error] socket: Max sockets reached\n");
             return NULL;
         }
 
-        // Find unused file descriptor greater than 0
+        // Look for an available file descriptor (starting from 1)
         for (fd = 1; fd > 0; fd++) {
-            bool found = FALSE;
-            for (i = 0; i < size; i++) {
-                if (fd != (socket_t)fds[i]) {
-                    found = TRUE;
+            bool is_used = FALSE;
+            for (idx = 0; idx < map_size; idx++) {
+                if (fd == (socket_t)existing_fds[idx]) {
+                    is_used = TRUE;
+                    break;
                 }
             }
 
-            // Initialize and return available socket
-            if (!found) {
-                socket_store_t socket;
+            // Found a free descriptor, initialize it
+            if (!is_used) {
+                socket_store_t new_socket;
 
-                socket.flag = FALSE;
-                socket.state = CLOSED;
-                socket.src = TOS_NODE_ID;
-                socket.dest.port = ROOT_SOCKET_PORT;
-                socket.dest.addr = ROOT_SOCKET_ADDR;
-                socket.lastWritten = 0;
-                socket.lastAck = 0;
-                socket.lastSent = 0;
-                socket.lastRead = 0;
-                socket.leastRcvd = 0;
-                socket.nextExpected = 0;
-                socket.RTT = 0;
-                socket.effectiveWindow = 0;
-                memset(&socket.sendBuff, '\0', SOCKET_BUFFER_SIZE);
-                memset(&socket.rcvdBuff, '\0', SOCKET_BUFFER_SIZE);
+                new_socket.flag = FALSE;               // Not in use
+                new_socket.state = CLOSED;
+                new_socket.src = TOS_NODE_ID;
+                new_socket.dest.port = ROOT_SOCKET_PORT;
+                new_socket.dest.addr = ROOT_SOCKET_ADDR;
+                new_socket.lastWritten = 0;
+                new_socket.lastAck = 0;
+                new_socket.lastSent = 0;
+                new_socket.lastRead = 0;
+                new_socket.leastRcvd = 0;
+                new_socket.nextExpected = 0;
+                new_socket.RTT = 0;
+                new_socket.effectiveWindow = 0;
 
-                call SocketMap.insert(fd, socket);
+                // Clear send and receive buffers
+                memset(&new_socket.sendBuff, '\0', SOCKET_BUFFER_SIZE);
+                memset(&new_socket.rcvdBuff, '\0', SOCKET_BUFFER_SIZE);
+
+                call SocketMap.insert(fd, new_socket);
                 return fd;
-            }      
+            }
         }
 
-        dbg(TRANSPORT_CHANNEL, "[Error] socket: No valid next file descriptor found\n");
+        dbg(TRANSPORT_CHANNEL, "[Error] socket: No valid file descriptor found\n");
         return NULL;
     }
 
-    // Binds a socket to a specified address
+    // Binds a socket to a provided address
     command error_t bind(socket_t fd, socket_addr_t *addr) {
-        socket_store_t socket = call SocketMap.get(fd);
-
         if (!fd) {
-            dbg(TRANSPORT_CHANNEL, "[Error] bind: Invalid file descriptor\n");
+            dbg(TRANSPORT_CHANNEL, "[Error] bind: Invalid fd\n");
             return FAIL;
         }
 
+        socket_store_t socket = call SocketMap.get(fd);
         socket.src = addr->port;
         call SocketMap.insert(fd, socket);
         return SUCCESS;
     }
 
-    // Accepts an incoming connection on a listening socket
+    // Accepts an incoming connection request on a listening socket
     command socket_t accept(socket_t fd) {
-        socket_store_t socket;
-        socket_t new_fd = call Transport.socket();
-
         if (!fd) {
-            dbg(TRANSPORT_CHANNEL, "[Error] accept: Invalid server file descriptor\n");
+            dbg(TRANSPORT_CHANNEL, "[Error] accept: Invalid server fd\n");
             return NULL;
         }
 
-        socket = call SocketMap.get(fd);
+        socket_store_t socket = call SocketMap.get(fd);
 
         if (socket.flag) {
-            dbg(TRANSPORT_CHANNEL, "[Error] accept: Root socket in use\n");
+            dbg(TRANSPORT_CHANNEL, "[Error] accept: Socket already in use\n");
             return NULL;
         }
 
+        socket_t new_fd = call Transport.socket();
+
         if (!new_fd) {
-            dbg(TRANSPORT_CHANNEL, "[Error] accept: Invalid new file descriptor\n");
+            dbg(TRANSPORT_CHANNEL, "[Error] accept: Failed to allocate new fd\n");
             return NULL;
         }
 
         socket.flag = TRUE;
-        socket.dest.addr = 0;
+        socket.dest.addr = 0; // FIXME: Obtain address dynamically
         socket.dest.port = 0;
         call SocketMap.insert(new_fd, socket);
+
         return new_fd;
     }
 
-    // Writes data to the socket's send buffer
+    // Writes data from buffer to socket's send buffer
     command uint16_t write(socket_t fd, uint8_t *buff, uint16_t bufflen) {
-        socket_store_t socket;
-
         if (!fd) {
-            dbg(TRANSPORT_CHANNEL, "[Error] write: Invalid file descriptor\n");
+            dbg(TRANSPORT_CHANNEL, "[Error] write: Invalid fd\n");
             return NULL;
         }
 
-        socket = call SocketMap.get(fd);
-        uint8_t start = socket.lastWritten + 1;
+        socket_store_t socket = call SocketMap.get(fd);
+        uint8_t buffer_start = socket.lastWritten + 1;
 
-        // Write buffer to send buffer if space permits
-        if (bufflen < SOCKET_BUFFER_SIZE - start) {
-            memcpy(socket.sendBuff + start, buff, bufflen);
-            socket.lastWritten = start + bufflen;
+        // Check if buffer has enough space to fit the data
+        if (bufflen < SOCKET_BUFFER_SIZE - buffer_start) {
+            memcpy(socket.sendBuff + buffer_start, buff, bufflen);
+            socket.lastWritten = buffer_start + bufflen;
             call SocketMap.insert(fd, socket);
             return bufflen;
         }
 
+        // Handle cases where buffer size exceeds capacity (not implemented)
         return NULL;
     }
 
-    // Handles an incoming TCP packet
+    // Processes an incoming TCP packet
     command error_t receive(pack* package) {
         tcp_header header;
         memcpy(&header, &package->payload, PACKET_MAX_PAYLOAD_SIZE);
+        // Process the packet further as needed (not fully implemented)
     }
 
-    // Reads data from the socket's receive buffer
+    // Reads data from socket's receive buffer into provided buffer
     command uint16_t read(socket_t fd, uint8_t *buff, uint16_t bufflen) {
-        socket_store_t socket;
-
         if (!fd) {
-            dbg(TRANSPORT_CHANNEL, "[Error] read: Invalid file descriptor\n");
+            dbg(TRANSPORT_CHANNEL, "[Error] read: Invalid fd\n");
             return NULL;
         }
 
-        socket = call SocketMap.get(fd);
+        socket_store_t socket = call SocketMap.get(fd);
+        uint8_t buffer_start = socket.lastWritten + 1;
 
-        uint8_t start = socket.lastWritten + 1;
-
-        // Read data into buffer if space permits
-        if (bufflen < SOCKET_BUFFER_SIZE - start) {
-            memcpy(socket.sendBuff + start, buff, bufflen);
-            socket.lastWritten = start + bufflen;
+        // Check if buffer has enough space to read the data
+        if (bufflen < SOCKET_BUFFER_SIZE - buffer_start) {
+            memcpy(socket.sendBuff + buffer_start, buff, bufflen);
+            socket.lastWritten = buffer_start + bufflen;
             call SocketMap.insert(fd, socket);
             return bufflen;
         }
 
+        // Handle cases where buffer size exceeds capacity (not implemented)
         return NULL;
     }
 
-    // Attempts to connect to a remote address
-    command error_t connect(socket_t fd, socket_addr_t * addr) {
-        socket_store_t socket;
+    // Initiates a connection to a remote address
+    command error_t connect(socket_t fd, socket_addr_t *addr) {
         if (!fd) {
-            dbg(TRANSPORT_CHANNEL, "[Error] connect: Invalid file descriptor\n");
+            dbg(TRANSPORT_CHANNEL, "[Error] connect: Invalid fd\n");
             return FAIL;
         }
 
-        socket = SocketMap.get(fd);
+        socket_store_t socket = call SocketMap.get(fd);
 
-        dbg(TRANSPORT_CHANNEL, "Error: Connect not implemented\n");
+        // Connection logic to be implemented here
+        dbg(TRANSPORT_CHANNEL, "Error: Connect function not yet implemented\n");
     }
 
-    // Closes the socket
+    // Closes the specified socket
     command error_t close(socket_t fd) {
-        dbg(TRANSPORT_CHANNEL, "Error: Close not implemented\n");
+        dbg(TRANSPORT_CHANNEL, "Error: Close function not yet implemented\n");
     }
 
-    // Hard closes the socket (forceful disconnect)
+    // Releases the specified socket (forceful disconnect)
     command error_t release(socket_t fd) {
-        dbg(TRANSPORT_CHANNEL, "Error: Release not implemented\n");
+        dbg(TRANSPORT_CHANNEL, "Error: Release function not yet implemented\n");
     }
 
-    // Puts the socket in listening mode
+    // Puts the socket into a listening state, awaiting connections
     command error_t listen(socket_t fd) {
-        dbg(TRANSPORT_CHANNEL, "Error: Listen not implemented\n");
+        dbg(TRANSPORT_CHANNEL, "Error: Listen function not yet implemented\n");
     }
 }
