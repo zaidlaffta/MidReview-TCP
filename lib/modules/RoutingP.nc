@@ -219,80 +219,97 @@ command void Routing.send(pack* msg) {
 }
 
 
-    command void Routing.receive(pack* routing_packet) {
-        uint16_t i;
+// Processes a received routing packet, updating or adding routes based on its content
+command void Routing.receive(pack* routing_packet) {
+    uint16_t i;
 
-        for (i = 0; i < routesPerPacket; i++) {
-            Route current_route;
-            memcpy(&current_route, (&routing_packet->payload) + i*ROUTE_SIZE, ROUTE_SIZE);
-            
-            if (current_route.dest == 0) {
-                continue;
-            }
-
-            if (current_route.dest == TOS_NODE_ID) {
-                continue;
-            }
-
-            if (current_route.cost > ROUTE_MAX_COST) {
-                dbg(ROUTING_CHANNEL, "ERROR - Invalid route cost of %d from %d\n", current_route.cost, current_route.dest);
-                continue;
-            }
-
-            if (current_route.next_hop == TOS_NODE_ID) {
-                current_route.cost = ROUTE_MAX_COST;
-            }
-
-            current_route.cost = min(current_route.cost + 1, ROUTE_MAX_COST);
-
-            if (!inTable(current_route.dest)) {
-                if (current_route.cost == ROUTE_MAX_COST) {
-                    continue;
-                }
-
-                current_route.dest = routing_packet->dest;
-                current_route.next_hop = routing_packet->src;
-                current_route.TTL = ROUTE_TIMEOUT;
-                current_route.route_changed = TRUE;
-
-                call RoutingTable.pushback(current_route);
-
-                triggeredUpdate();
-                continue;
-            } 
-
-            else {
-                Route existing_route = getRoute(current_route.dest);
-
-                if (existing_route.next_hop == routing_packet->src) {
-                    existing_route.TTL = ROUTE_TIMEOUT;
-                }
-
-                if ((existing_route.next_hop == routing_packet->src
-                    && existing_route.cost != current_route.cost)
-                    || existing_route.cost > current_route.cost) {
-                    
-                    existing_route.next_hop = routing_packet->src;
-                    existing_route.TTL = ROUTE_TIMEOUT;
-                    existing_route.route_changed = TRUE;
-
-             
-                    if (current_route.cost == ROUTE_MAX_COST &&
-                        existing_route.cost != ROUTE_MAX_COST) {
-
-                        existing_route.TTL = ROUTE_GARBAGE_COLLECT;
-                    }
-
-                    existing_route.cost = current_route.cost;
-                
-                } else {
-                    existing_route.TTL = ROUTE_TIMEOUT;
-                }
-
-                updateRoute(existing_route);
-            } 
+    // Loop through each route entry in the packet payload
+    for (i = 0; i < routesPerPacket; i++) {
+        Route current_route;
+        // Copy the route entry from the payload into current_route
+        memcpy(&current_route, (&routing_packet->payload) + i * ROUTE_SIZE, ROUTE_SIZE);
+        
+        // Skip if the route destination is 0 (invalid or blank)
+        if (current_route.dest == 0) {
+            continue;
         }
+
+        // Skip if the route destination is the current node (self-route)
+        if (current_route.dest == TOS_NODE_ID) {
+            continue;
+        }
+
+        // Skip if the route cost is above the maximum allowable cost
+        if (current_route.cost > ROUTE_MAX_COST) {
+            dbg(ROUTING_CHANNEL, "ERROR - Invalid route cost of %d from %d\n", current_route.cost, current_route.dest);
+            continue;
+        }
+
+        // Apply "Split Horizon with Poison Reverse" by setting cost to max if next hop is self
+        if (current_route.next_hop == TOS_NODE_ID) {
+            current_route.cost = ROUTE_MAX_COST;
+        }
+
+        // Increment the route cost, capping at ROUTE_MAX_COST
+        current_route.cost = min(current_route.cost + 1, ROUTE_MAX_COST);
+
+        // Check if the route destination is not currently in the routing table
+        if (!inTable(current_route.dest)) {
+            // Skip adding if the route cost is max, indicating it is unreachable
+            if (current_route.cost == ROUTE_MAX_COST) {
+                continue;
+            }
+
+            // Set the current route's destination, next hop, and TTL
+            current_route.dest = routing_packet->dest;
+            current_route.next_hop = routing_packet->src;
+            current_route.TTL = ROUTE_TIMEOUT;
+            current_route.route_changed = TRUE;
+
+            // Add the new route to the routing table
+            call RoutingTable.pushback(current_route);
+
+            // Trigger an update to inform neighbors of the new route
+            triggeredUpdate();
+            continue;
+        } 
+
+        // If the route already exists in the routing table, update it if necessary
+        else {
+            Route existing_route = getRoute(current_route.dest);
+
+            // Reset TTL if the route has the same next hop
+            if (existing_route.next_hop == routing_packet->src) {
+                existing_route.TTL = ROUTE_TIMEOUT;
+            }
+
+            // Update route if there is a new cost or a cheaper path
+            if ((existing_route.next_hop == routing_packet->src
+                && existing_route.cost != current_route.cost)
+                || existing_route.cost > current_route.cost) {
+                
+                existing_route.next_hop = routing_packet->src;
+                existing_route.TTL = ROUTE_TIMEOUT;
+                existing_route.route_changed = TRUE;
+
+                // Start garbage collection timer if route becomes unreachable
+                if (current_route.cost == ROUTE_MAX_COST &&
+                    existing_route.cost != ROUTE_MAX_COST) {
+                    existing_route.TTL = ROUTE_GARBAGE_COLLECT;
+                }
+
+                existing_route.cost = current_route.cost;
+            
+            } else {
+                // If no cost update, just reset TTL
+                existing_route.TTL = ROUTE_TIMEOUT;
+            }
+
+            // Update the existing route in the routing table
+            updateRoute(existing_route);
+        } 
     }
+}
 
 
     command void Routing.updateNeighbors(uint32_t* neighbors, uint16_t numNeighbors) {
