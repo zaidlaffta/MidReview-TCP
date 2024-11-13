@@ -159,34 +159,38 @@ void decrementTimer(Route route) {
     }
 }
 
-    void decrementRouteTimers() {
-        uint16_t i;
+   // Decrements the TTL for all routes in the routing table
+void decrementRouteTimers() {
+    uint16_t i;
 
-        for (i = 0; i < call RoutingTable.size(); i++) {
-            Route route = call RoutingTable.get(i);
+    // Loop through each route in the table and decrement its TTL
+    for (i = 0; i < call RoutingTable.size(); i++) {
+        Route route = call RoutingTable.get(i);
+        decrementTimer(route); // Apply TTL decrement and potential garbage collection
+    }
+}
 
-            decrementTimer(route);
-        }
+// Marks a specific route as invalid by setting its TTL to 1 and initiating a decrement
+void invalidate(Route route) {
+    route.TTL = 1; // Set the TTL to 1 to mark it as invalid
+    decrementTimer(route); // Call decrement to process the invalidation
+}
+
+// Starts the routing protocol, ensuring neighbors are updated first and initiating the periodic timer
+command void Routing.start() {
+    // Check if there are any neighbors; if not, log an error and return
+    if (call RoutingTable.size() == 0) {
+        dbg(ROUTING_CHANNEL, "ERROR - Can't route with no neighbors! Make sure to updateNeighbors first.\n");
+        return;
     }
 
-
-    void invalidate(Route route) {
-        route.TTL = 1;
-        decrementTimer(route);
+    // Start the regular timer if it's not already running
+    if (!call RegularTimer.isRunning()) {
+        dbg(ROUTING_CHANNEL, "Initiating routing protocol...\n");
+        call RegularTimer.startPeriodic(randNum(25000, 35000)); // Set timer with a random interval
     }
+}
 
-
-    command void Routing.start() {
-        if (call RoutingTable.size() == 0) {
-            dbg(ROUTING_CHANNEL, "ERROR - Can't route with no neighbors! Make sure to updateNeighbors first.\n");
-            return;
-        }
-
-        if (!call RegularTimer.isRunning()) {
-            dbg (ROUTING_CHANNEL, "Intiating routing protocol...\n");
-            call RegularTimer.startPeriodic( randNum(25000, 35000) );
-        }
-    }
 
 
     command void Routing.send(pack* msg) {
