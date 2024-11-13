@@ -8,4 +8,5 @@
 interface Flooding {
     // Command to initiate the flooding
     command void flood(pack* msg);
+   
 }

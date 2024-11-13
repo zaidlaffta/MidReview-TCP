@@ -132,4 +132,9 @@ implementation {
             sendFlood(msg);
         }
     }
+    // Function to log packet information for debugging
+    void logPacketInfo(pack* msg) {
+        dbg(FLOODING_CHANNEL, "Logging packet - Source: %d, Sequence: %d, Destination: %d\n", msg->src, msg->seq, msg->dest);
+    }
+
 }
