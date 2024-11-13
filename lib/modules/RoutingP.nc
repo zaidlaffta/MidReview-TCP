@@ -89,21 +89,26 @@ void removeRoute(uint16_t dest) {
 }
 
    
-    void updateRoute(Route route) {
-        uint16_t size = call RoutingTable.size();
-        uint16_t i;
+ // Updates an existing route in the routing table with new information
+void updateRoute(Route route) {
+    uint16_t size = call RoutingTable.size(); // Get the current size of the routing table
+    uint16_t i;
 
-        for (i = 0; i < size; i++) {
-            Route current_route = call RoutingTable.get(i);
+    // Loop through each route in the table to find the matching destination
+    for (i = 0; i < size; i++) {
+        Route current_route = call RoutingTable.get(i); // Retrieve the route at the current index
 
-            if (route.dest == current_route.dest) {
-                call RoutingTable.set(i, route);
-                return;
-            }
+        // Check if the route destination matches the destination of the route to be updated
+        if (route.dest == current_route.dest) {
+            call RoutingTable.set(i, route); // Update the route at this index with the new information
+            return; // Exit after updating the route
         }
-
-        dbg(ROUTING_CHANNEL, "ERROR - Update attempt on nonexistent route %d\n", route.dest);
     }
+
+    // Log an error if the route to update was not found in the table
+    dbg(ROUTING_CHANNEL, "ERROR - Update attempt on nonexistent route %d\n", route.dest);
+}
+   
 
 // Resets the 'route_changed' flag for all routes in the routing table
 void resetRouteUpdates() {
