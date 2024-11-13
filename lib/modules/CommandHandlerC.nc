@@ -1,9 +1,6 @@
-/**
- * @author UCM ANDES Lab
- * $Author: abeltran2 $
- * $LastChangedDate: 2014-08-31 16:06:26 -0700 (Sun, 31 Aug 2014) $
- *
- */
+//Auth: Zaid Laffta
+// Winter 2024
+// CSE 160
 
 
 #include "../../includes/CommandMsg.h"

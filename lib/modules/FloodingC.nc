@@ -1,8 +1,6 @@
-/**
- * @author Jadon Hansell
- * 
- * Flooding method for packet transmission
- */
+//Auth: Zaid Laffta
+// Winter 2024
+// CSE 160
 
 #include "../../includes/packet_id.h"
 

@@ -1,10 +1,4 @@
-/**
- * ANDES Lab - University of California, Merced
- *
- * @author UCM ANDES Lab
- * @date   2013/09/03
- *
- */
+
 #include "../../includes/packet.h"
 #include "../../includes/sendInfo.h"
 #include "../../includes/channels.h"

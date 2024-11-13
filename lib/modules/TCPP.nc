@@ -1,3 +1,7 @@
+//Auth: Zaid Laffta
+// Winter 2024
+// CSE 160
+
 #include <stdlib.h>
 #include <stdio.h>
 #include <Timer.h>
@@ -21,9 +25,6 @@ implementation {
     const uint16_t default_rtt = 200;    //default rount trip time
     uint8_t temp_buffer[TCP_PAYLOAD_SIZE]; // buffer to store payload
     
-
-    //uint8_t myData[] = "Hello, TinyOS!";
-   // uint16_t dataSize = sizeof(myData) - 1;  // Exclude the null terminator
 
 
     void sendSyn(socket_t socketFD);
@@ -544,10 +545,10 @@ command void TCP.receive(pack* msg) {
 
     // Log packet details and socket information
     dbg(TRANSPORT_CHANNEL, "================== TCP Packet received ===============\n");
-   // logPack(msg);
-   // logHeader(&header);
+    logPack(msg);
+    logHeader(&header);
     dbg(TRANSPORT_CHANNEL, "****************** Socket ********************\n");
-   // logSocket(&socket);
+    logSocket(&socket);
     dbg(TRANSPORT_CHANNEL, "------------------------------------------\n\n");
 
     dbg(GENERAL_CHANNEL, "====================================\n");

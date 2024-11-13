@@ -1,8 +1,6 @@
-/**
- * @author Jadon Hansell
- * 
- * Neighbor discovery through flooding
- */
+//Auth: Zaid Laffta
+// Winter 2024
+// CSE 160
 
 #include "../../includes/packet.h"
 

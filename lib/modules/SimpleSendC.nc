@@ -1,3 +1,7 @@
+//Auth: Zaid Laffta
+// Winter 2024
+// CSE 160
+
 #include "../../includes/am_types.h"
 
 generic configuration SimpleSendC(int channel){
