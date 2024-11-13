@@ -92,7 +92,7 @@ implementation {
     /**
      * Called when node recieves neighbor discovery packet
      */
-    command void NeighborDiscovery.recieve(pack* msg) {
+    command void NeighborDiscovery.receive(pack* msg) {
         protocolHandler(msg);
     }
 
