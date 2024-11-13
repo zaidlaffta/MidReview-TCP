@@ -68,22 +68,25 @@ Route getRoute(uint16_t dest) {
     return return_route; // Return the found route (or a default route if none matched)
 }
 
-   
-    void removeRoute(uint16_t dest) {
-        uint16_t size = call RoutingTable.size();
-        uint16_t i;
+   // Removes a route for a specified destination from the routing table
+void removeRoute(uint16_t dest) {
+    uint16_t size = call RoutingTable.size(); // Get the current size of the routing table
+    uint16_t i;
 
-        for (i = 0; i < size; i++) {
-            Route route = call RoutingTable.get(i);
+    // Loop through each route in the routing table
+    for (i = 0; i < size; i++) {
+        Route route = call RoutingTable.get(i); // Retrieve the route at the current index
 
-            if (route.dest == dest) {
-                call RoutingTable.remove(i);
-                return;
-            }
+        // Check if the route's destination matches the target destination
+        if (route.dest == dest) {
+            call RoutingTable.remove(i); // Remove the matching route from the table
+            return; // Exit the function after successfully removing the route
         }
-
-        dbg(ROUTING_CHANNEL, "ERROR - Can't remove nonexistent route %d\n", dest);
     }
+
+    // Log an error if the specified destination was not found in the routing table
+    dbg(ROUTING_CHANNEL, "ERROR - Can't remove nonexistent route %d\n", dest);
+}
 
    
     void updateRoute(Route route) {
