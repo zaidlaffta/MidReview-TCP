@@ -190,7 +190,7 @@ implementation {
 
         socket = call SocketMap.get(socketFD);
 
-        if (seq == 65535) { // SYN/FIN packets (special case in this implementation)
+        if (seq == 65535) { 
             return socket.state == SYN_RCVD
                 || socket.state == ESTABLISHED
                 || socket.state == CLOSED;
@@ -407,8 +407,6 @@ implementation {
             }
         }
 
-   
-        //sendDat(socketFD, myData, TCP_PAYLOAD_SIZE);
         sendDat(socketFD, temp_buffer, TCP_PAYLOAD_SIZE);
         call PacketTimer.startOneShot(call PacketTimer.getNow() + 2*socket.RTT);
     }
