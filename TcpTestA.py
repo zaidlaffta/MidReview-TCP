@@ -1,3 +1,8 @@
+#Zaid Laffta
+#Winter 2024
+# CSE 160
+#This code is given by Dr. Cerpa
+
 from TestSim import TestSim
 
 def main():
