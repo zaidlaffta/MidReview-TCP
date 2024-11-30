@@ -10,8 +10,8 @@
 #include "../../includes/tcp_header.h"
 
 module TCPP {
+    // This component provides a TCP interface to other components
     provides interface TCP;
-    //Interfaces 
     uses interface Timer<TMilli> as PacketTimer;
     uses interface Hashmap<socket_store_t> as SocketMap;
     uses interface List<socket_store_t> as ServerList;
@@ -26,7 +26,7 @@ implementation {
     uint8_t temp_buffer[TCP_PAYLOAD_SIZE]; // buffer to store payload
     
 
-
+    //functions for the TCP implementation
     void sendSyn(socket_t socketFD);
     void sendAck(socket_t socketFD, pack* original_message);
     void sendFin(socket_t socketFD);
@@ -348,12 +348,15 @@ implementation {
     }
 
 
+    ////////////////////////////////// send next packet from socket /////////////////////////////////
+    // extracts the TCP header and send the packet   
     void sendNextFromSocket(socket_t socketFD) {
         pack packet;
         tcp_header header;
         socket_store_t socket;
         uint16_t i;
-
+        // Check if the provided socket file descriptor (socketFD) is valid.
+        // If not, log an error message and exit the function.
         if (!socketFD) {
             dbg(TRANSPORT_CHANNEL, "[Error] sendNextFromSocket: Invalid file descriptor\n");
             return;
@@ -365,6 +368,8 @@ implementation {
         memcpy(&header, &packet.payload, PACKET_MAX_PAYLOAD_SIZE);
 
         signal TCP.route(&packet);
+        // Start a one-shot timer to retransmit the packet after an interval.
+        // The interval is calculated as twice the socket's round-trip time (RTT).
         call PacketTimer.startOneShot(call PacketTimer.getNow() + 2*socket.RTT);
     }
 
@@ -674,9 +679,6 @@ command void TCP.receive(pack* msg) {
             dbg(GENERAL_CHANNEL, "Invalid socket state encountered. Check state machine for issues.\n");
     }
 }
-
-  
-
 
    /////////////////////  Paker timer  ////////////////////////
    // Event handler for when the PacketTimer fires, indicating a packet timeout
