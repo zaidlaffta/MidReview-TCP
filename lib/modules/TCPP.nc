@@ -287,8 +287,7 @@ implementation {
 
         for (i = 0; i < socket->flag; i++) {
             uint8_t offset = socket->lastWritten+1;
-
-            if (offset == SOCKET_BUFFER_SIZE) {
+                if (offset == SOCKET_BUFFER_SIZE) {
                 offset = 0;
             }
 
