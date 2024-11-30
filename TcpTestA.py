@@ -1,25 +1,49 @@
 from TestSim import TestSim
+
 def main():
-# Get simulation ready to run.
-s = TestSim();
-# Before we do anything, lets simulate the network off.
-s.runTime(1);
-# Load the the layout of the network.
-s.loadTopo("tuna-melt.topo");
-# Add a noise model to all of the motes.
-s.loadNoise("no_noise.txt");
-# Turn on all of the sensors.
-s.bootAll();
-# Add the main channels. These channels are declared in includes/channels.h
-s.addChannel(s.COMMAND_CHANNEL);
-s.addChannel(s.GENERAL_CHANNEL);
-s.addChannel(s.TRANSPORT_CHANNEL);
-# After sending a ping, simulate a little to prevent collision.
-s.runTime(300);
-s.testServer(1);
-s.runTime(60);
-s.testClient(4);
-s.runTime(1);
-s.runTime(1000);
+    # Initialize the simulation environment.
+    sim = TestSim()
+
+    # Start the simulation.
+    sim.runTime(1)
+
+    # Load the network topology and noise model.
+    sim.loadTopo("tuna-melt.topo")  # Load the network topology file.
+    sim.loadNoise("no_noise.txt")  # Add a noise-free model to all motes.
+
+    # Boot all sensors in the network.
+    sim.bootAll()
+
+    # Add channels for debugging and monitoring.
+    sim.addChannel(sim.COMMAND_CHANNEL)
+    sim.addChannel(sim.GENERAL_CHANNEL)
+    sim.addChannel(sim.TRANSPORT_CHANNEL)
+
+    # Allow the network to stabilize.
+    sim.runTime(300)
+
+    # Set up a server on a specific address and port.
+    server_address = 1
+    server_port = 80
+    sim.testServer(address=5, port=50)
+
+    # Give the server time to initialize.
+    sim.runTime(60)
+
+    # Client sends data to the server.
+    client_address = 4
+    src_port = 8080
+    transfer_amount = 12
+    sim.testClient(clientAddress=2, dest=5, srcPort=20, destPort=50, transfer=22)
+
+    # Simulate for some time to allow the data transfer to complete.
+    sim.runTime(5)
+
+    # Close the client connection.
+    sim.closeClient(clientAddress=2, dest=5, srcPort=20, destPort=50, transfer=22)
+
+    # Simulate for a little more time to wrap up.
+    sim.runTime(5)
+
 if __name__ == '__main__':
-main()
+    main()
