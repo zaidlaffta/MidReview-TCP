@@ -28,8 +28,8 @@ def main():
     sim.runTime(300)
 
     # Set up a server on a specific address and port.
-    server_address = 1
-    server_port = 80
+   # server_address = 1
+   # server_port = 80
     sim.testServer(address=5, port=50)
 
     # Give the server time to initialize.
