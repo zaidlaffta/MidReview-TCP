@@ -4,7 +4,7 @@ from TOSSIM import *
 from CommandMsg import *
 
 class TestSim:
-   moteids=[]
+    moteids=[]
     # COMMAND TYPES
     CMD_PING = 0
     CMD_NEIGHBOR_DUMP = 1
