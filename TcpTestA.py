@@ -38,14 +38,14 @@ def main():
     # Client sends data to the server.
     client_address = 4
     src_port = 20
-    transfer_amount = 15
-    sim.testClient(clientAddress=4, dest=5, srcPort=20, destPort=50, transfer=15)
+    transfer_amount = 30
+    sim.testClient(clientAddress=4, dest=5, srcPort=20, destPort=50, transfer=30)
 
     # Simulate for some time to allow the data transfer to complete.
     sim.runTime(5)
 
     # Close the client connection.
-    sim.closeClient(clientAddress=4, dest=5, srcPort=20, destPort=50, transfer=15)
+    sim.closeClient(clientAddress=4, dest=5, srcPort=20, destPort=50, transfer=30)
 
     # Simulate for a little more time to wrap up.
     sim.runTime(5)
