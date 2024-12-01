@@ -124,6 +124,16 @@ class TestSim:
     def addChannel(self, channelName, out=sys.stdout):
         print 'Adding Channel', channelName;
         self.t.addChannel(channelName, out);
+        
+    def testServer(self, address, port):
+        self.sendCMD(self.CMD_TEST_SERVER, address, "{0}".format(chr(port)))
+
+    def testClient(self, clientAddress, dest, srcPort, destPort, transfer):
+        self.sendCMD(self.CMD_TEST_CLIENT, clientAddress, "{0}{1}{2}{3}".format(chr(dest), chr(srcPort), chr(destPort), chr(transfer)))
+    
+    def closeClient(self, clientAddress, dest, srcPort, destPort):
+        self.sendCMD(self.CMD_CLOSE_CLIENT, clientAddress, "{0}{1}{2}".format(chr(dest), chr(srcPort), chr(destPort)))
+
 
 def main():
     s = TestSim();
