@@ -1,4 +1,8 @@
-
+#ANDES Lab - University of California, Merced
+#Author: UCM ANDES Lab
+#$Author: abeltran2 $
+#$LastChangedDate: 2014-08-31 16:06:26 -0700 (Sun, 31 Aug 2014) $
+#! /usr/bin/python
 import sys
 from TOSSIM import *
 from CommandMsg import *
@@ -8,11 +12,14 @@ class TestSim:
     # COMMAND TYPES
     CMD_PING = 0
     CMD_NEIGHBOR_DUMP = 1
+    CMD_NEIGHBOR_DISCOVERY = 2
     CMD_ROUTE_DUMP = 3
     CMD_TEST_CLIENT = 4
     CMD_TEST_SERVER = 5
-    CMD_CLOSE_CLIENT = 7
-    
+    CMD_KILL = 6
+    CMD_FLOOD = 7
+    CMD_ERROR = 9
+
     # CHANNELS - see includes/channels.h
     COMMAND_CHANNEL="command";
     GENERAL_CHANNEL="general";
@@ -29,6 +36,7 @@ class TestSim:
 
     # Personal Debuggin Channels for some of the additional models implemented.
     HASHMAP_CHANNEL="hashmap";
+    MATRIX_CHANNEL="matrix";
 
     # Initialize Vars
     numMote=0
@@ -118,6 +126,12 @@ class TestSim:
     def ping(self, source, dest, msg):
         self.sendCMD(self.CMD_PING, source, "{0}{1}".format(chr(dest),msg));
 
+    def neighborDiscovery(self):
+        self.sendCMD(self.CMD_NEIGHBOR_DISCOVERY);
+    
+    def flood(self, source, dest, msg):
+        self.sendCMD(self.CMD_FLOOD, source, "{0}{1}".format(chr(dest),msg));
+
     def neighborDMP(self, destination):
         self.sendCMD(self.CMD_NEIGHBOR_DUMP, destination, "neighbor command");
 
@@ -127,16 +141,6 @@ class TestSim:
     def addChannel(self, channelName, out=sys.stdout):
         print 'Adding Channel', channelName;
         self.t.addChannel(channelName, out);
-        
-    def testServer(self, address, port):
-        self.sendCMD(self.CMD_TEST_SERVER, address, "{0}".format(chr(port)))
-
-    def testClient(self, clientAddress, dest, srcPort, destPort, transfer):
-        self.sendCMD(self.CMD_TEST_CLIENT, clientAddress, "{0}{1}{2}{3}".format(chr(dest), chr(srcPort), chr(destPort), chr(transfer)))
-    
-    def closeClient(self, clientAddress, dest, srcPort, destPort):
-        self.sendCMD(self.CMD_CLOSE_CLIENT, clientAddress, "{0}{1}{2}".format(chr(dest), chr(srcPort), chr(destPort)))
-
 
 def main():
     s = TestSim();
@@ -146,19 +150,16 @@ def main():
     s.bootAll();
     s.addChannel(s.COMMAND_CHANNEL);
     s.addChannel(s.GENERAL_CHANNEL);
+    s.addChannel(s.NEIGHBOR_CHANNEL);
+    s.addChannel(s.FLOODING_CHANNEL);
 
-    #Change runtime
-    s.runTime(10);
+    s.runTime(20);
     s.ping(1, 2, "Hello, World");
-    #Change runtime
     s.runTime(10);
     s.ping(1, 3, "Hi!");
-    # s.kill(4
-    # #change runtime
-    # s.runTime(100);
-    # s.boot(4)
-   # s.runTime(500);
-    
+    s.runTime(20);
+    # s.flood(1, 7, "I'm Flooding!")
+    s.runTime(60)
 
 if __name__ == '__main__':
     main()
