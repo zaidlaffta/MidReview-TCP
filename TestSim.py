@@ -174,7 +174,7 @@ class TestSim:
 def main():
     s = TestSim();
     s.runTime(10);
-    s.loadTopo("raivat.topo"); #commented out to test a smaller topology
+    s.loadTopo("pizza.topo"); #commented out to test a smaller topology
     #s.loadTopo("example.topo");
     #s.loadTopo("long_line.topo");
     #s.loadNoise("no_noise.txt");
