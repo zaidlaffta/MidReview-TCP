@@ -20,10 +20,10 @@ implementation  {
     }
 
     command void ChatClient.Broadcast(pack myMsg){
-        FIXME: parameters should be maybe a packet and socket type?
+         parameters should be maybe a packet and socket type?
 
 
-        FIXME: dbg(GENERAL_CHANNEL, "msg \r\n", myMsg.payload ); // should display msg contents with packet  to payload
+         dbg(GENERAL_CHANNEL, "msg \r\n", myMsg.payload ); // should display msg contents with packet  to payload
     }
 
     command void ChatClient.Whisper(pack myMsg){
