@@ -78,6 +78,15 @@ implementation{
                 dbg(COMMAND_CHANNEL, "Command Type: Close Client\n");
                 signal CommandHandler.closeClient(buff[0], buff[1], buff[2]);
                 break;
+                  case CMD_HELLO: // added for Project 4
+                dbg(COMMAND_CHANNEL, "Command Type: Server Connection\n");
+                signal CommandHandler.serverConnection(buff[0], &buff[1]); // 0: clientPort | 1: username
+                break;
+
+            case CMD_BROADCAST_MSG: // added for Project 4
+                dbg(COMMAND_CHANNEL, "Command Type: Broadcast\n");
+                signal CommandHandler.broadcastMsg(&buff[0]);
+                break;
 
             default:
                 dbg(COMMAND_CHANNEL, "CMD_ERROR: \"%d\" does not match any known commands.\n", msg->id);
