@@ -175,7 +175,6 @@ def main():
     s = TestSim();
     s.runTime(10);
     s.loadTopo("pizza.topo"); #commented out to test a smaller topology
-    s.loadNoise("ex_noise.txt");
     s.bootAll();
  
     s.addChannel(s.CHAT_CHANNEL);
