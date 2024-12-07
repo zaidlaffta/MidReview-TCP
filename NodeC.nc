@@ -45,7 +45,6 @@ implementation {
     components TCPC;
     Node.TCP -> TCPC;
     // added for project 4
-    components ChatClientC;
-    Node.ChatClient -> ChatClientC;
+
 
 }

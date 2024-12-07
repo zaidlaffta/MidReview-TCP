@@ -172,14 +172,14 @@ implementation {
     event void CommandHandler.setTestClient(uint16_t dest, uint16_t srcPort, 
                                             uint16_t destPort, uint16_t transfer) {
         dbg(GENERAL_CHANNEL, "Spinning out client for the TCP connection \n");
-      //  call TCP.startClient(dest, srcPort, destPort, transfer);
+        call TCP.startClient(dest, srcPort, destPort, transfer);
     }
 
     ////////////////////////////////// CommandHandler.closeClient /////////////////////////////////
     // Closes a TCP client connection to a specified destination and port
     event void CommandHandler.closeClient(uint16_t dest, uint16_t srcPort, uint16_t destPort) {
        // dbg(GENERAL_CHANNEL, "CLOSE_CLIENT EVENT\n");
-     //   call TCP.closeClient(dest, srcPort, destPort);
+        call TCP.closeClient(dest, srcPort, destPort);
         dbg(GENERAL_CHANNEL, "Client has been closed \n");
         dbg(GENERAL_CHANNEL, "All Flage been exchanged, SYN, SYN-ACK, ACK, and FIN \n");
 
