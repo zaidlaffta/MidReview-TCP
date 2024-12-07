@@ -16,4 +16,5 @@ interface CommandHandler{
    event void closeClient(uint16_t dest, uint16_t srcPort, uint16_t destPort);
    event void setAppServer();
    event void setAppClient();
+   event void broadcastMsg();
 }

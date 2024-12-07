@@ -185,7 +185,7 @@ implementation {
 
     }
 /////////////////////////
-    event void CommandHandler.serverConnection(uint8_t clientPort, char *payload) {
+    event void CommandHandler.setAppServer(uint8_t clientPort, char *payload) {
       // dbg(CHAT_CHANNEL, "[NODE %d] serverConnection EVENT \n", TOS_NODE_ID);
       // dbg(CHAT_CHANNEL, "[NODE %d] clientPort [%d] | userName [%s]\n", TOS_NODE_ID, clientPort, payload);
       dbg(GENERAL_CHANNEL, "[INITIATED IN NODE %d] Payload Contents: %s", TOS_NODE_ID, payload);
@@ -200,7 +200,7 @@ implementation {
    }
 /////////////////////////////
 
-    event void CommandHandler.setAppServer() { }
+    event void CommandHandler.() { }
     event void CommandHandler.setAppClient() { }
 
     ////////////////////////////////// makePack /////////////////////////////////
