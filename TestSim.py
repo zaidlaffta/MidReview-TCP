@@ -175,76 +175,12 @@ def main():
     s = TestSim();
     s.runTime(10);
     s.loadTopo("pizza.topo"); #commented out to test a smaller topology
-    #s.loadTopo("example.topo");
-    #s.loadTopo("long_line.topo");
-    #s.loadNoise("no_noise.txt");
     s.loadNoise("ex_noise.txt");
-    #s.loadNoise("some_noise.txt");
     s.bootAll();
-    #s.addChannel(s.COMMAND_CHANNEL);
-    #s.addChannel(s.GENERAL_CHANNEL);
+ 
     s.addChannel(s.CHAT_CHANNEL);
-    #s.addChannel(s.FLOODING_CHANNEL);
-    #s.addChannel(s.ROUTING_CHANNEL);
-    #s.addChannel(s.TRANSPORT_CHANNEL);
-    #s.addChannel(s.DEBUG_CHANNEL);
-    #s.addChannel(s.NEIGHBOR_CHANNEL);
-
-    # s.runTime(20);
-    # s.ping(1, 2, "Hello, World");
-    # s.runTime(10);
-    # s.ping(1, 3, "Hi!");
-    # s.runTime(20);
-
-    # ----------------------------------------------------------------------------------------------------
-    # Added for Project 1 (Flooding)
-    # TTL = 5; #set TTL to num of min hops from src to dest
-    # seqID = 1;
-    # s.flood(1, 2, TTL, seqID, "Flooding");
-    # #seqID++;
-    # s.runTime(50);
-
-    # # s.flood(1, 2, TTL, seqID, "Flooding");
-    # # seqID++;
-    # # s.runTime(20);
-    # ----------------------------------------------------------------------------------------------------
-    # Added for Project 2 (Routing)
-    # TTL = 50; #set TTL to num of min hops from src to dest
-    # seqID = 1;
-    # s.runTime(100);
-    # # s.routing(1, 8, TTL, seqID, "Routing");
-    # # # s.routeDMP(1);
-    # # s.runTime(50);
-    # s.routing(1, 9, TTL, seqID, "Routing");
-    # #s.routing(1, 15, TTL, seqID, "Routing");
-    # s.runTime(9000);
-
-    # ----------------------------------------------------------------------------------------------------
-    # Added for Project 3 (Transport)
-    # s.runTime(100); #time for routing table to hopefully finish being created
-    # s.createServer(2,1); #initating server at node[2] and binding to port[1]
-    # s.runTime(20);
-    # s.createClient(1,2,5,1,5); # client, server, clientport, serverport, transfer
-    # # s.runTime(10);
-    # # s.createClient(4,2,3,1,9); # client, server, clientport, serverport, transfer
-    # #s.createClient(3,2,3,1,10); #justadded
-    # s.runTime(10); #justadded
-
-    # ----------------------------------------------------------------------------------------------------
-    # # NEED TO FIX SERVERPORT STUFF | LOOKS LIKE ITS OFF SOMEHOW
-    # s.runTime(100); #time for routing table to hopefully finish being created
-    # s.createServer(2,21); #initating server at node[2] and binding to port[1]
-    # s.runTime(150);
-    # s.createClient(1,2,51,11,30); # client, server, clientport, serverport, transfer
-    # s.runTime(200);
-    # s.createClient(3,2,3,1,20); # client, server, clientport, serverport, transfer
-    # # s.createClient(3,2,3,1,10); #justadded
-    # #s.runTime(1); #justadded
-    # s.runTime(1000); #justadded
-
-    # ----------------------------------------------------------------------------------------------------
-    # Project 4 Stuff
-    # Notes: Server Node[1] | ralwar Node[2] | rpatroo Node[3]
+    
+    
     s.runTime(100);
     s.createServer(1,41); #initating server at node[1] and binding to port[41]
     s.runTime(10);
@@ -258,12 +194,6 @@ def main():
     s.runTime(100);
     s.serverConnection("listusr\r\n",3,2); #clientPort [3] no longer being used, can delete it
     s.runTime(1000);
-
-
-    
-
-# def createClient(self, source, destination, srcPort, destPort, transfer):
-# def createServer(self, source, address, port):
 
 
 
