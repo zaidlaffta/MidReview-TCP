@@ -183,6 +183,21 @@ implementation {
         dbg(GENERAL_CHANNEL, "All Flage been exchanged, SYN, SYN-ACK, ACK, and FIN \n");
 
     }
+/////////////////////////
+    event void CommandHandler.serverConnection(uint8_t clientPort, char *payload) {
+      // dbg(CHAT_CHANNEL, "[NODE %d] serverConnection EVENT \n", TOS_NODE_ID);
+      // dbg(CHAT_CHANNEL, "[NODE %d] clientPort [%d] | userName [%s]\n", TOS_NODE_ID, clientPort, payload);
+      dbg(CHAT_CHANNEL, "[INITIATED IN NODE %d] Payload Contents: %s", TOS_NODE_ID, payload);
+      call ChatClient.handleMsg(payload);
+   }
+
+   event void CommandHandler.broadcastMsg(char *payload) {
+      dbg(GENERAL_CHANNEL, "[NODE %d] broadCastMsg EVENT \n", TOS_NODE_ID);
+      dbg(GENERAL_CHANNEL, "[NODE %d] msg [%s]\n", TOS_NODE_ID, (char*)payload);
+      //makePack(&sendPackage, TOS_NODE_ID, destination, 0, 0, 0, payload, PACKET_MAX_PAYLOAD_SIZE);
+      //call Sender.send(sendPackage, destination);
+   }
+/////////////////////////////
 
     event void CommandHandler.setAppServer() { }
     event void CommandHandler.setAppClient() { }
