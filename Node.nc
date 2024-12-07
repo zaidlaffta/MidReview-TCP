@@ -20,6 +20,7 @@ module Node {
     uses interface Timer<TMilli> as RoutingTimer; // Timer for periodic routing updates
     uses interface Routing;                       // Manages routing tasks
     uses interface TCP;                           // Implements TCP-like behavior
+    uses interface ChatClient;
 }
 
 implementation {
